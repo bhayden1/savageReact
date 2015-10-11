@@ -4,29 +4,41 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 
-var Header = React.createClass({
-  displayName: 'Header',
+var HeaderRow = React.createClass({
+  displayName: 'HeaderRow',
 
   render: function render() {
     return React.createElement(
-      'h1',
-      null,
-      this.props.text
+      'div',
+      { className: 'row item item-divider' },
+      React.createElement(
+        'div',
+        { className: 'col col-33' },
+        'Name'
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        'T'
+      )
     );
   }
 });
+
+var characters = [{ name: "Kyden", job: "Paladin", toughness: 11, key: 1 }, { name: "Frey", job: "Scholar", toughness: 6, key: 2 }, { name: "BT", job: "Dragoon", toughness: 8, key: 3 }];
 
 var CharacterList = React.createClass({
   displayName: 'CharacterList',
 
   render: function render() {
+    var characterNodes = this.props.characters.map(function (character) {
+      return React.createElement(Character, { key: character.key, name: character.name, toughness: character.toughness });
+    });
     return React.createElement(
       'div',
-      { className: 'character' },
-      React.createElement(Header, { text: 'Characters' }),
-      React.createElement(Character, { name: 'Kyden', 'class': 'Paladin' }),
-      React.createElement(Character, { name: 'Frey', 'class': 'Scholar' }),
-      React.createElement(Character, { name: 'BT', 'class': 'Dragoon' })
+      { className: 'list' },
+      React.createElement(HeaderRow, null),
+      characterNodes
     );
   }
 });
@@ -37,18 +49,53 @@ var Character = React.createClass({
   render: function render() {
     return React.createElement(
       'div',
-      { className: 'character' },
+      { className: 'row item' },
       React.createElement(
-        'strong',
-        null,
+        'div',
+        { className: 'col col-33' },
         this.props.name
       ),
-      this.props['class']
+      React.createElement(
+        'div',
+        { className: 'col' },
+        this.props.toughness
+      )
     );
   }
 });
 
-ReactDOM.render(React.createElement(CharacterList, null), document.getElementById('character-list'));
+var Input = React.createClass({
+  displayName: 'Input',
+
+  render: function render() {
+    return React.createElement(
+      'label',
+      { className: 'item-input' },
+      React.createElement(
+        'span',
+        { className: 'input-label' },
+        this.props.label
+      ),
+      React.createElement('input', { type: 'text', placeholder: this.props.hint })
+    );
+  }
+});
+
+var DamageCalculator = React.createClass({
+  displayName: 'DamageCalculator',
+
+  render: function render() {
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(Input, { label: 'Damage', hint: 'Enter Damage' }),
+      React.createElement(Input, { label: 'AP', hint: 'Enter AP' }),
+      React.createElement(CharacterList, { characters: this.props.characters })
+    );
+  }
+});
+
+ReactDOM.render(React.createElement(DamageCalculator, { characters: characters }), document.getElementById('character-list'));
 
 },{"react":157,"react-dom":2}],2:[function(require,module,exports){
 'use strict';
