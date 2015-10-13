@@ -20,19 +20,34 @@ var HeaderRow = React.createClass({
         'div',
         { className: 'col' },
         'T'
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        'A'
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        'OF'
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        'WND'
       )
     );
   }
 });
 
-var characters = [{ name: "Kyden", job: "Paladin", toughness: 11, key: 1 }, { name: "Frey", job: "Scholar", toughness: 6, key: 2 }, { name: "BT", job: "Dragoon", toughness: 8, key: 3 }];
+var characters = [{ name: "Kyden", job: "Paladin", toughness: 11, key: 1, overflow: 0, wounds: 0, armor: 6 }, { name: "Frey", job: "Scholar", toughness: 6, key: 2, overflow: 0, wounds: 0, armor: 2 }, { name: "BT", job: "Dragoon", toughness: 8, key: 3, overflow: 0, wounds: 0, armor: 4 }];
 
 var CharacterList = React.createClass({
   displayName: 'CharacterList',
 
   render: function render() {
     var characterNodes = this.props.characters.map(function (character) {
-      return React.createElement(Character, { key: character.key, name: character.name, toughness: character.toughness });
+      return React.createElement(Character, { key: character.key, name: character.name, toughness: character.toughness, wounds: character.wounds, overflow: character.overflow, armor: character.armor });
     });
     return React.createElement(
       'div',
@@ -59,6 +74,21 @@ var Character = React.createClass({
         'div',
         { className: 'col' },
         this.props.toughness
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        this.props.armor
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        this.props.overflow
+      ),
+      React.createElement(
+        'div',
+        { className: 'col' },
+        this.props.wounds
       )
     );
   }
@@ -67,6 +97,9 @@ var Character = React.createClass({
 var Input = React.createClass({
   displayName: 'Input',
 
+  changed: function changed(evt) {
+    this.props.changed(evt.target.value);
+  },
   render: function render() {
     return React.createElement(
       'label',
@@ -76,7 +109,7 @@ var Input = React.createClass({
         { className: 'input-label' },
         this.props.label
       ),
-      React.createElement('input', { type: 'text', placeholder: this.props.hint })
+      React.createElement('input', { type: 'number', placeholder: this.props.hint, onChange: this.changed })
     );
   }
 });
@@ -84,13 +117,49 @@ var Input = React.createClass({
 var DamageCalculator = React.createClass({
   displayName: 'DamageCalculator',
 
+  loadCharacters: function loadCharacters() {
+    var timeout = (function () {
+      this.setState({ characters: characters });
+    }).bind(this);
+    setTimeout(timeout, 1000);
+  },
+  calculateDamage: function calculateDamage(ap, damage) {
+    var newCharacters = this.state.characters.map(function (character) {
+      var armor = character.armor - ap;
+      armor = armor < 0 ? 0 : armor;
+      var taken = damage - (character.toughness + armor);
+      character.overflow = taken;
+      character.wounds = taken / 4;
+      return character;
+    });
+    return newCharacters;
+  },
+  damageEntered: function damageEntered(damage) {
+    var ap = this.state.ap || 0;
+    console.log('damage entered ap:' + ap);
+    var newCharacters = this.calculateDamage(ap, damage);
+    this.setState({ characters: newCharacters, damage: damage });
+  },
+  apEntered: function apEntered(ap) {
+    var damage = this.state.damage || 0;
+    console.log('ap entered damage:' + damage);
+    console.log('ap:' + ap);
+    var newCharacters = this.calculateDamage(ap, damage);
+    this.setState({ characters: newCharacters, ap: ap });
+  },
+  getInitialState: function getInitialState() {
+    return { characters: [], damage: 0, ap: 0 };
+  },
+  componentDidMount: function componentDidMount() {
+    this.loadCharacters();
+  },
   render: function render() {
     return React.createElement(
       'div',
       null,
-      React.createElement(Input, { label: 'Damage', hint: 'Enter Damage' }),
-      React.createElement(Input, { label: 'AP', hint: 'Enter AP' }),
-      React.createElement(CharacterList, { characters: this.props.characters })
+      React.createElement(Input, { label: 'Damage', hint: 'Enter Damage', changed: this.damageEntered }),
+      React.createElement(Input, { label: 'AP', hint: 'Enter AP', changed: this.apEntered }),
+      React.createElement(CharacterList, { characters: this.state.characters })
     );
   }
 });
