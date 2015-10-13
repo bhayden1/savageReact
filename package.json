@@ -1,0 +1,25 @@
+{
+  "name": "savageReact",
+  "version": "0.0.1",
+  "description": "savage worlds tools in react.js",
+  "main": "main.js",
+  "dependencies": {
+    "babelify": "^6.3.0",
+    "react": "^0.14.0",
+    "react-dom": "^0.14.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bhayden1/savageReact.git"
+  },
+  "author": "Bill Hayden",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bhayden1/savageReact/issues"
+  },
+  "homepage": "https://github.com/bhayden1/savageReact"
+}
