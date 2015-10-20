@@ -1,6 +1,8 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var calculator = require('./lib/damageCalculator.js');
+var _ = require('lodash');
+import {createStore} from 'redux';
 
 var characters = [
   {name: "Kyden", job: "Paladin", toughness: 11, key: 1, overflow: 0, wounds: 0, armor: 6},
@@ -14,6 +16,46 @@ var enemies = [
   {name: "Ifrit", job: "Dragoon", toughness: 8, key: 3, overflow: 0, wounds: 0, armor: 4}
 ];
 
+var initialState = function() {
+  return {
+    ap: 0,
+    damage: 0,
+    characters: characters,
+    enemies: enemies
+  }
+};
+
+function characterList(state=initialState(), action) {
+  var newCharacters;
+  var newEnemies;
+  switch(action.type) {
+    case 'AP':
+      newCharacters = calculator.calculateDamage(action.ap, state.damage, state.characters);
+      newEnemies = calculator.calculateDamage(action.ap, state.damage, state.enemies);
+      return _.assign({}, state, {
+        ap: action.ap,
+        characters: newCharacters,
+        enemies: newEnemies,
+      });
+    case 'DAMAGE':
+      newCharacters = calculator.calculateDamage(state.ap, action.damage, state.characters);
+      newEnemies = calculator.calculateDamage(state.ap, action.damage, state.enemies);
+      return _.assign({}, state, {
+        damage: action.damage,
+        characters: newCharacters,
+        enemies: newEnemies,
+      });
+      return state;
+    default:
+      return state;
+  }
+};
+
+var store = createStore(characterList);
+store.subscribe(()=> console.log(store.getState()));
+
+store.dispatch({type: 'AP', ap: 2});
+store.dispatch({type: 'DAMAGE', damage: 22});
 var HeaderRow = React.createClass({
   render: function() {
     return(
@@ -23,15 +65,6 @@ var HeaderRow = React.createClass({
         <div className="col">A</div>
         <div className="col">OF</div>
         <div className="col">WND</div>
-      </div>
-    )
-  }
-});
-
-var DividerRow = React.createClass({
-  render: function() {
-    return (
-      <div className="row item item-divider">
       </div>
     )
   }
@@ -90,7 +123,7 @@ var DamageCalculator = React.createClass({
     setTimeout(timeout, 1000);
   },
   damageEntered: function(damage) {
-    var ap = this.state.ap || 0;    
+    var ap = this.state.ap || 0;
     var newCharacters = calculator.calculateDamage(ap, damage, this.state.characters);
     var newEnemies = calculator.calculateDamage(ap, damage, this.state.enemies);
     this.setState({characters: newCharacters, damage: damage, enemies: newEnemies});
