@@ -1,8 +1,10 @@
-var React = require('react');
-var ReactDOM = require('react-dom');
-var calculator = require('./lib/damageCalculator.js');
-var _ = require('lodash');
+import React from 'react';
+import {Component} from 'react';
+import ReactDOM from 'react-dom';
+import {calculateDamage} from './lib/damageCalculator';
+import {_} from 'lodash';
 import {createStore} from 'redux';
+import { Provider } from 'react-redux';
 
 var characters = [
   {name: "Kyden", job: "Paladin", toughness: 11, key: 1, overflow: 0, wounds: 0, armor: 6},
@@ -22,7 +24,7 @@ var initialState = function() {
     damage: 0,
     characters: characters,
     enemies: enemies
-  }
+  };
 };
 
 function characterList(state=initialState(), action) {
@@ -30,8 +32,8 @@ function characterList(state=initialState(), action) {
   var newEnemies;
   switch(action.type) {
     case 'AP':
-      newCharacters = calculator.calculateDamage(action.ap, state.damage, state.characters);
-      newEnemies = calculator.calculateDamage(action.ap, state.damage, state.enemies);
+      newCharacters = calculateDamage(action.ap, state.damage, state.characters);
+      newEnemies = calculateDamage(action.ap, state.damage, state.enemies);
       return _.assign({}, state, {
         ap: action.ap,
         characters: newCharacters,
@@ -45,19 +47,18 @@ function characterList(state=initialState(), action) {
         characters: newCharacters,
         enemies: newEnemies,
       });
-      return state;
     default:
       return state;
   }
-};
+}
 
 var store = createStore(characterList);
 store.subscribe(()=> console.log(store.getState()));
 
-store.dispatch({type: 'AP', ap: 2});
-store.dispatch({type: 'DAMAGE', damage: 22});
-var HeaderRow = React.createClass({
-  render: function() {
+//store.dispatch({type: 'AP', ap: 2});
+//store.dispatch({type: 'DAMAGE', damage: 22});
+class HeaderRow extends Component{
+  render() {
     return(
       <div className="row item item-divider">
         <div className="col col-33">Name</div>
@@ -68,26 +69,26 @@ var HeaderRow = React.createClass({
       </div>
     )
   }
-});
+}
 
-var CharacterList = React.createClass({
-  render:function() {
+class CharacterList extends Component {
+  render() {
     var characterNodes = this.props.characters.map(function(character) {
       return (
         <Character key={character.key} name={character.name} toughness={character.toughness} wounds={character.wounds} overflow={character.overflow} armor={character.armor}/>
-      )
+      );
     });
     return (
       <div className="list">
         <HeaderRow />
         {characterNodes}
       </div>
-    )
+    );
   }
-});
+}
 
-var Character = React.createClass({
-  render:function() {
+class Character extends Component{
+  render() {
     return(
       <div className="row item">
         <div className="col col-33">{this.props.name}</div>
@@ -96,51 +97,59 @@ var Character = React.createClass({
         <div className="col">{this.props.overflow}</div>
         <div className="col">{this.props.wounds}</div>
       </div>
-    )
+    );
   }
-});
+}
 
-var Input = React.createClass({
-  changed: function(evt) {
+class Input extends Component {
+  changed(evt) {
     this.props.changed(evt.target.value);
-  },
-  render: function() {
+  }
+
+  render() {
     return (
       <label className="item-input">
         <span className="input-label">{this.props.label}</span>
         <input type="number" placeholder={this.props.hint} onChange={this.changed} ></input>
       </label>
-    )
+    );
   }
-});
+}
 
-var DamageCalculator = React.createClass({
-  loadCharacters: function() {
+class DamageCalculatorR extends Component {
+  constructor() {
+    super();
+    this.state = {characters: [], enemies: [], damage: 0, ap: 0};
+  }
+  loadCharacters() {
     var timeout = (function() {
       this.setState({characters: characters});
       this.setState({enemies: enemies});
-    }).bind(this)
+    }).bind(this);
     setTimeout(timeout, 1000);
-  },
-  damageEntered: function(damage) {
+  }
+  damageEntered(damage) {
     var ap = this.state.ap || 0;
     var newCharacters = calculator.calculateDamage(ap, damage, this.state.characters);
     var newEnemies = calculator.calculateDamage(ap, damage, this.state.enemies);
     this.setState({characters: newCharacters, damage: damage, enemies: newEnemies});
-  },
-  apEntered: function(ap) {
+  }
+  apEntered(ap) {
     var damage = this.state.damage || 0;
     var newCharacters = calculator.calculateDamage(ap, damage, this.state.characters);
     var newEnemies = calculator.calculateDamage(ap, damage, this.state.enemies);
     this.setState({characters: newCharacters, ap: ap, enemies: newEnemies});
-  },
-  getInitialState: function() {
+  }
+  /*
+  getInitialState() {
+    console.log('get initial state');
     return {characters: [], enemies: [], damage: 0, ap: 0};
-  },
-  componentDidMount: function() {
+  }
+  */
+  componentDidMount() {
     this.loadCharacters();
-  },
-  render: function() {
+  }
+  render() {
     return (
       <div>
         <Input label="Damage" hint="Enter Damage" changed={this.damageEntered} />
@@ -148,11 +157,11 @@ var DamageCalculator = React.createClass({
         <CharacterList characters={this.state.characters} />
         <CharacterList characters={this.state.enemies} />
       </div>
-    )
+    );
   }
-});
+}
 
 ReactDOM.render(
-  <DamageCalculator characters={characters} />,
+  <DamageCalculatorR characters={characters} />,
   document.getElementById('character-list')
 );
