@@ -5,6 +5,7 @@ import {calculateDamage} from './lib/damageCalculator';
 import {_} from 'lodash';
 import {createStore} from 'redux';
 import { Provider } from 'react-redux';
+import { connect } from 'react-redux';
 
 var characters = [
   {name: "Kyden", job: "Paladin", toughness: 11, key: 1, overflow: 0, wounds: 0, armor: 6},
@@ -30,6 +31,7 @@ var initialState = function() {
 function characterList(state=initialState(), action) {
   var newCharacters;
   var newEnemies;
+  console.log('store called with:' + action.type);
   switch(action.type) {
     case 'AP':
       newCharacters = calculateDamage(action.ap, state.damage, state.characters);
@@ -40,8 +42,8 @@ function characterList(state=initialState(), action) {
         enemies: newEnemies,
       });
     case 'DAMAGE':
-      newCharacters = calculator.calculateDamage(state.ap, action.damage, state.characters);
-      newEnemies = calculator.calculateDamage(state.ap, action.damage, state.enemies);
+      newCharacters = calculateDamage(state.ap, action.damage, state.characters);
+      newEnemies = calculateDamage(state.ap, action.damage, state.enemies);
       return _.assign({}, state, {
         damage: action.damage,
         characters: newCharacters,
@@ -55,8 +57,6 @@ function characterList(state=initialState(), action) {
 var store = createStore(characterList);
 store.subscribe(()=> console.log(store.getState()));
 
-//store.dispatch({type: 'AP', ap: 2});
-//store.dispatch({type: 'DAMAGE', damage: 22});
 class HeaderRow extends Component{
   render() {
     return(
@@ -102,66 +102,56 @@ class Character extends Component{
 }
 
 class Input extends Component {
-  changed(evt) {
-    this.props.changed(evt.target.value);
-  }
-
   render() {
     return (
       <label className="item-input">
         <span className="input-label">{this.props.label}</span>
-        <input type="number" placeholder={this.props.hint} onChange={this.changed} ></input>
+        <input type="number" placeholder={this.props.hint} onChange={this.props.changed} ></input>
       </label>
     );
   }
 }
+function mapStateToProps(state) {
+  return {
+    characters: state.characters,
+    enemies: state.enemies,
+    damage: state.damage,
+    ap:state.ap
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    damageEntered: (evt)=>dispatch({type: 'DAMAGE', damage: evt.target.value}),
+    apEntered: (evt)=>dispatch({type:'AP', ap: evt.target.value})
+  };
+}
+
+var dispatch = {
+    damageEntered: (damage)=>dispatch({type: 'DAMAGE', damage: damage}),
+    apEntered: (ap)=>dispatch({type:'AP', ap: ap})
+};
 
 class DamageCalculatorR extends Component {
-  constructor() {
-    super();
-    this.state = {characters: [], enemies: [], damage: 0, ap: 0};
-  }
-  loadCharacters() {
-    var timeout = (function() {
-      this.setState({characters: characters});
-      this.setState({enemies: enemies});
-    }).bind(this);
-    setTimeout(timeout, 1000);
-  }
-  damageEntered(damage) {
-    var ap = this.state.ap || 0;
-    var newCharacters = calculator.calculateDamage(ap, damage, this.state.characters);
-    var newEnemies = calculator.calculateDamage(ap, damage, this.state.enemies);
-    this.setState({characters: newCharacters, damage: damage, enemies: newEnemies});
-  }
-  apEntered(ap) {
-    var damage = this.state.damage || 0;
-    var newCharacters = calculator.calculateDamage(ap, damage, this.state.characters);
-    var newEnemies = calculator.calculateDamage(ap, damage, this.state.enemies);
-    this.setState({characters: newCharacters, ap: ap, enemies: newEnemies});
-  }
-  /*
-  getInitialState() {
-    console.log('get initial state');
-    return {characters: [], enemies: [], damage: 0, ap: 0};
-  }
-  */
-  componentDidMount() {
-    this.loadCharacters();
-  }
   render() {
+    console.log(this.props.damageEntered);
+    console.log(this.props.apEntered);
     return (
       <div>
-        <Input label="Damage" hint="Enter Damage" changed={this.damageEntered} />
-        <Input label="AP" hint="Enter AP" changed={this.apEntered}/>
-        <CharacterList characters={this.state.characters} />
-        <CharacterList characters={this.state.enemies} />
+        <Input label="Damage" hint="Enter Damage" changed={this.props.damageEntered} />
+        <Input label="AP" hint="Enter AP" changed={this.props.apEntered}/>
+        <CharacterList characters={this.props.characters} />
+        <CharacterList characters={this.props.enemies} />
       </div>
     );
   }
 }
+var DamageCalcRR = connect(mapStateToProps, mapDispatchToProps)(DamageCalculatorR);
+
 
 ReactDOM.render(
-  <DamageCalculatorR characters={characters} />,
+  <Provider store={store}>
+    <DamageCalcRR />
+  </Provider>,
   document.getElementById('character-list')
 );
